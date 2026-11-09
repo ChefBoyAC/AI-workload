@@ -4,3 +4,7 @@ __pycache__/
 log/
 results/**/logging/
 results/**/logging_*/
+torus_kit/workload/
+torus_kit/results/*.log
+torus_kit/log/
+.DS_Store

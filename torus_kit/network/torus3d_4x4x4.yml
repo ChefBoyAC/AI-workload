@@ -1,0 +1,14 @@
+# 3D Torus, 64 NPUs (4 x 4 x 4) -- TPU-v4-pod-slice style
+#
+# ASTRA-sim has no "Torus" keyword: a torus is a stack of Ring dimensions.
+# Each Ring here is bidirectional and wraps around, so 3 x Ring = 3D torus.
+#
+# NPU id -> coordinates:  x = id % 4,  y = (id / 4) % 4,  z = id / 16
+#   dim 0 (x): neighbours differ by 1   -> used for Tensor Parallel (TP)
+#   dim 1 (y): neighbours differ by 4   -> used for Expert Parallel (EP) in MoE / DP in LLM
+#   dim 2 (z): neighbours differ by 16  -> used for Data Parallel (DP)
+
+topology: [ Ring, Ring, Ring ]
+npus_count: [ 4, 4, 4 ]           # 64 NPUs total
+bandwidth: [ 50.0, 50.0, 50.0 ]   # GB/s per link, per direction (ICI-class link)
+latency: [ 500.0, 500.0, 500.0 ]  # ns per hop
