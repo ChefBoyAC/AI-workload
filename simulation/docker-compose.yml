@@ -1,23 +1,35 @@
-# Analytical Astra-SIM one-shot (memory-capped). Overwrites ./generated.
+# ASTRA-sim matrix: LLM-v1 | MoE-v1  ×  Ring | Rail | Torus
+# Default communication scheduler: NCCL
 #
-# Build:  docker compose build
-# MoE:    docker compose run --rm moe-rail-sim
-# LLM:    docker compose run --rm llm-v1-rail-sim
-# Reuse:  GENERATE=0 docker compose run --rm llm-v1-rail-sim
+# Build once:
+#   docker compose build
+#
+# Examples:
+#   docker compose run --rm llm-rail
+#   docker compose run --rm moe-ring
+#   docker compose run --rm llm-torus
+#   SCHEDULER=baseline docker compose run --rm moe-rail
+#
+# Or one-shot with env overrides:
+#   docker compose run --rm -e WORKLOAD=moe-v1 -e TOPOLOGY=torus matrix
 
 x-astra-sim-common: &astra-sim-common
   image: moe-rail-astra-sim:phase-c
   working_dir: /workspace
   volumes:
-    - ./generated:/workspace/generated
-    - ./config:/workspace/config:ro
-    - ./src:/workspace/src:ro
+    - ./:/workspace
   mem_limit: 4g
   memswap_limit: 4g
   shm_size: 512m
+  environment: &astra-env
+    GENERATE: ${GENERATE:-1}
+    SCHEDULER: ${SCHEDULER:-nccl}
+    ASTRA_SIM_HOME: /opt/astra-sim
+    PYTHONPATH: /workspace
 
 services:
-  moe-rail-sim:
+  # Generic (override WORKLOAD / TOPOLOGY / SCHEDULER)
+  matrix:
     <<: *astra-sim-common
     build:
       context: .
@@ -25,13 +37,50 @@ services:
       args:
         ASTRA_SIM_REF: master
     environment:
-      GENERATE: ${GENERATE:-1}
-      CONFIG_PATH: /workspace/config/moe_rail.yaml
-      ASTRA_SIM_HOME: /opt/astra-sim
+      <<: *astra-env
+      WORKLOAD: ${WORKLOAD:-llm-v1}
+      TOPOLOGY: ${TOPOLOGY:-rail}
 
-  llm-v1-rail-sim:
+  # --- LLM-v1 ---
+  llm-ring:
     <<: *astra-sim-common
     environment:
-      GENERATE: ${GENERATE:-1}
-      CONFIG_PATH: /workspace/config/llm_v1_rail.yaml
-      ASTRA_SIM_HOME: /opt/astra-sim
+      <<: *astra-env
+      WORKLOAD: llm-v1
+      TOPOLOGY: ring
+
+  llm-rail:
+    <<: *astra-sim-common
+    environment:
+      <<: *astra-env
+      WORKLOAD: llm-v1
+      TOPOLOGY: rail
+
+  llm-torus:
+    <<: *astra-sim-common
+    environment:
+      <<: *astra-env
+      WORKLOAD: llm-v1
+      TOPOLOGY: torus
+
+  # --- MoE-v1 ---
+  moe-ring:
+    <<: *astra-sim-common
+    environment:
+      <<: *astra-env
+      WORKLOAD: moe-v1
+      TOPOLOGY: ring
+
+  moe-rail:
+    <<: *astra-sim-common
+    environment:
+      <<: *astra-env
+      WORKLOAD: moe-v1
+      TOPOLOGY: rail
+
+  moe-torus:
+    <<: *astra-sim-common
+    environment:
+      <<: *astra-env
+      WORKLOAD: moe-v1
+      TOPOLOGY: torus

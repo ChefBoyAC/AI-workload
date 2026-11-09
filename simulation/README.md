@@ -51,6 +51,69 @@ Do not compare JCTs across different NPU counts as if they were identical condit
 
 ---
 
+
+## How to run in Docker (Ring / Rail / Torus × LLM / MoE)
+
+Default **communication scheduler is NCCL** (`SCHEDULER=nccl`).  
+Astra-SIM uses the NCCL *approximation* under `schedulers/nccl/` (not the real NVIDIA NCCL library).
+
+### 0) One-time build (from `simulation/`)
+
+```bash
+cd simulation
+docker compose build
+```
+
+### 1) Run any matrix cell (named services)
+
+```bash
+# LLM-v1
+docker compose run --rm llm-ring
+docker compose run --rm llm-rail
+docker compose run --rm llm-torus
+
+# MoE-v1
+docker compose run --rm moe-ring
+docker compose run --rm moe-rail
+docker compose run --rm moe-torus
+```
+
+Each run overwrites `simulation/generated/results.json`. Copy it aside if you need side-by-side JCTs.
+
+### 2) Same thing with env vars
+
+```bash
+docker compose run --rm -e WORKLOAD=moe-v1 -e TOPOLOGY=torus matrix
+```
+
+| Env | Values | Default |
+|---|---|---|
+| `WORKLOAD` | `llm-v1`, `moe-v1` | `llm-v1` |
+| `TOPOLOGY` | `ring`, `rail`, `torus` | `rail` |
+| `SCHEDULER` | `nccl`, `baseline` | **`nccl`** |
+| `GENERATE` | `1`, `0` | `1` |
+
+### 3) Compare NCCL vs baseline on the same topology
+
+```bash
+# NCCL (default)
+docker compose run --rm moe-rail
+cp generated/results.json /tmp/moe-rail-nccl.json
+
+# Baseline Astra-SIM scheduler
+SCHEDULER=baseline docker compose run --rm moe-rail
+cp generated/results.json /tmp/moe-rail-baseline.json
+```
+
+### 4) What to read after a run
+
+```bash
+cat generated/results.json
+```
+
+Check `extra.scheduler` (`nccl` or `baseline`), `extra.topology`, `extra.workload`, and `Total Time (us)` (JCT proxy).
+
+---
 # Rail Docker guide (LLM-v1 / MoE-v1 on Rail)
 
 ## Prerequisites

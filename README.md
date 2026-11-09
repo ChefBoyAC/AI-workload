@@ -2,21 +2,25 @@
 
 CS2200 / ASTRA-sim intra-DLT scheduler comparison.
 
-## Simulation kit (matrix baselines + NCCL)
+## Simulation kit (matrix + Docker)
 
-The unified Progress Report 2 layout lives under **[`simulation/`](simulation/)**:
+See **[`simulation/README.md`](simulation/README.md)**.
 
-- Workloads: **LLM-v1**, **MoE-v1**
-- Topologies: **Ring**, **Rail**, **Torus**
-- Schedulers (so far): **baseline** + **NCCL**
+Docker can run **LLM-v1 / MoE-v1 × Ring / Rail / Torus**. The default communication scheduler is **NCCL** (`schedulers/nccl/`).
 
-Start here: [`simulation/README.md`](simulation/README.md)
+```bash
+cd simulation
+docker compose build
+docker compose run --rm llm-rail    # NCCL default
+docker compose run --rm moe-torus
+SCHEDULER=baseline docker compose run --rm moe-ring
+```
 
-## Legacy / source kits (still in repo)
+## Legacy kits still in repo
 
-| Path | Origin branch | Role |
-|---|---|---|
-| `configs/*-ring/`, `scripts/run_*_ring.py` | `arianne-ring` | Ring scenarios |
-| `simulation/config`, `simulation/src`, Docker | `simulation` | Rail generators |
-| `torus_kit/` | `torus` | Torus scenarios |
+| Path | Role |
+|---|---|
+| `configs/*-ring/`, `scripts/run_*_ring.py` | Original Ring host scripts |
+| `torus_kit/` | Original Torus host kit |
+| `simulation/` | Unified matrix + Docker runner |
 

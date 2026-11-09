@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
-# Docker entrypoint: GENERATE=1 regenerates inputs; then run sim + parse results.
+# Matrix entrypoint: WORKLOAD × TOPOLOGY × SCHEDULER (default NCCL).
 set -euo pipefail
 
 cd /workspace
 
-echo "=== MoE Rail Astra-SIM (Phase C) ==="
+# Ensure protobuf runtime matches Chakra gencode major version.
+python -m pip install -q "protobuf==7.35.1" >/dev/null 2>&1 || true
+
+echo "=== ASTRA-sim matrix Docker entrypoint ==="
+echo "WORKLOAD=${WORKLOAD:-llm-v1}"
+echo "TOPOLOGY=${TOPOLOGY:-rail}"
+echo "SCHEDULER=${SCHEDULER:-nccl}"
 echo "GENERATE=${GENERATE:-1}"
-echo "CONFIG_PATH=${CONFIG_PATH:-/workspace/config/moe_rail.yaml}"
 echo "ASTRA_SIM_HOME=${ASTRA_SIM_HOME:-/opt/astra-sim}"
 
-# Ensure output dirs exist for volume mounts.
 mkdir -p /workspace/generated/workload \
          /workspace/generated/topology \
          /workspace/generated/system
 
-exec python -m src.run_sim
+exec python -m src.run_matrix

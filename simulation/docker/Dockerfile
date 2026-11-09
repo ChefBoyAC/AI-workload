@@ -95,16 +95,24 @@ RUN /opt/venv/bin/pip install -e . || /opt/venv/bin/pip install .
 # major version or `chakra_converter Text` fails (gencode 7 vs runtime 5).
 RUN /opt/venv/bin/pip install "protobuf==7.35.1"
 
-### ---- Project code ----
+### ---- Project code (matrix kit) ----
 WORKDIR /workspace
 COPY requirements.txt /workspace/requirements.txt
 RUN /opt/venv/bin/pip install -r /workspace/requirements.txt
 COPY config /workspace/config
 COPY src /workspace/src
+COPY workloads /workspace/workloads
+COPY topologies /workspace/topologies
+COPY schedulers /workspace/schedulers
+COPY experiments /workspace/experiments
+COPY shared /workspace/shared
 COPY docker/entrypoint.sh /workspace/docker/entrypoint.sh
 RUN chmod +x /workspace/docker/entrypoint.sh
 
-ENV CONFIG_PATH=/workspace/config/moe_rail.yaml \
-    PYTHONPATH=/workspace
+ENV PYTHONPATH=/workspace \
+    WORKLOAD=llm-v1 \
+    TOPOLOGY=rail \
+    SCHEDULER=nccl \
+    GENERATE=1
 
 ENTRYPOINT ["/workspace/docker/entrypoint.sh"]
