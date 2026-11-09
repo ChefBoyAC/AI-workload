@@ -1,23 +1,57 @@
-# MoE / LLM-v1 + Rail on Astra-SIM
+# ASTRA-sim Intra-DLT Matrix (Simulation Kit)
 
-This repo generates a **workload** + **Rail topology**, runs them through **Astra-SIM 2.x** (analytical backend) in Docker, and writes a parsed **job completion time (JCT)** into `generated/results.json`.
+Unified **baseline workloads + topologies** for Progress Report 2, plus an **NCCL** scheduler approximation.
 
-Use it as a baseline for later comparing custom intra-DLT schedulers (NCCL, TACCL, ByteScheduler, SYNDICATE, CadentFlow, …).
+Merged from branches: `arianne-ring` (Ring), `simulation` (Rail), `torus` (Torus).
+
+## Progress Report 2 coverage
+
+| AI Workload | Workload Config ID | Topology | Baseline | NCCL |
+|---|---|---|---|---|
+| LLM | LLM-v1 | Torus | `experiments/llm-v1-torus` | `schedulers/nccl/torus.json` |
+| LLM | LLM-v1 | Ring | `experiments/llm-v1-ring` | `schedulers/nccl/ring.json` |
+| LLM | LLM-v1 | Rail | `experiments/llm-v1-rail` | `schedulers/nccl/rail.json` |
+| MoE | MoE-v1 | Torus | `experiments/moe-v1-torus` | `schedulers/nccl/torus.json` |
+| MoE | MoE-v1 | Ring | `experiments/moe-v1-ring` | `schedulers/nccl/ring.json` |
+| MoE | MoE-v1 | Rail | `experiments/moe-v1-rail` | `schedulers/nccl/rail.json` |
+
+Cadent Flow / SYNDICATE / TACCL / ByteScheduler are **out of scope** here (placeholders in the spreadsheet only).
+
+## Layout
+
+```text
+simulation/
+  workloads/          # llm-v1/, moe-v1/  (shared params)
+  topologies/         # ring/, rail/, torus/
+  schedulers/
+    baseline/         # default Astra-SIM system policies
+    nccl/             # NCCL-like system policies
+  experiments/        # one folder per matrix row (workload × topology)
+  config/ + src/ + docker/   # Rail generators / Docker one-shot
+```
+
+Each `experiments/<row>/experiment.json` points at the workload params, topology network, baseline scheduler, and NCCL scheduler.
+
+### NPU counts
+
+| Topology | NPUs |
+|---|---|
+| Ring | 16 |
+| Rail | 16 (2×8) |
+| Torus | 64 (4×4×4) |
+
+Do not compare JCTs across different NPU counts as if they were identical conditions.
+
+## Quick pointers
+
+- **Ring runs:** repo-root `scripts/run_llm_ring.py`, `scripts/run_moe_ring.py` + `configs/*-ring/`
+- **Rail runs:** see Rail Docker section below (`docker compose` from this `simulation/` directory)
+- **Torus runs:** repo-root `torus_kit/run_all.sh`
+- **NCCL:** swap `--system-configuration` to the matching file under `schedulers/nccl/` (see `schedulers/nccl/README.md`)
 
 ---
 
-## What you get today
-
-| Workload | Config | Parallelism | Main collectives |
-|---|---|---|---|
-| **MoE** | `config/moe_rail.yaml` | TP=2, EP=4, DP=2, PP=1 | TP AllReduce, EP AllToAll ×2, DP AllReduce |
-| **LLM-v1** | `config/llm_v1_rail.yaml` | TP=4, DP=4, PP=1 | TP AllReduce, DP AllReduce |
-
-Both use the same **Rail topology**: 2 nodes × 8 GPUs = 16 GPUs (`logical_dims: [8, 2]`).
-
-**Important:** each run **overwrites** `generated/` to save disk space. Save `results.json` elsewhere if you need both MoE and LLM results side by side.
-
----
+# Rail Docker guide (LLM-v1 / MoE-v1 on Rail)
 
 ## Prerequisites
 

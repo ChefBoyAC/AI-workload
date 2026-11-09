@@ -1,0 +1,16 @@
+{
+  "matrix_row": {
+    "ai_workload": "MoE",
+    "workload_config_id": "MoE-v1",
+    "topology": "Ring"
+  },
+  "npus": 16,
+  "workload_params": "../../workloads/moe-v1/params.yaml",
+  "topology_network": "../../topologies/ring/network.yml",
+  "remote_memory": "../../shared/remote_memory.json",
+  "schedulers": {
+    "baseline": "../../schedulers/baseline/ring.json",
+    "nccl": "../../schedulers/nccl/ring.json"
+  },
+  "how_to_run": "Repo-root scripts/run_*_ring.py or Astra-SIM with this network+system. For NCCL, use schedulers/nccl/ring.json as --system-configuration."
+}

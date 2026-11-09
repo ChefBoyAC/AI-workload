@@ -1,0 +1,6 @@
+# Rail analytical network: 2 nodes x 8 GPUs = 16
+# dim0 = intra-node, dim1 = inter-node rail
+topology: [FullyConnected, Switch]
+npus_count: [8, 2]
+bandwidth: [300.0, 50.0]  # GB/s
+latency: [100.0, 500.0]  # ns
