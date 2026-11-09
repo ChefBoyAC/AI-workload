@@ -1,0 +1,6 @@
+*.et
+__pycache__/
+.DS_Store
+log/
+results/**/logging/
+results/**/logging_*/
