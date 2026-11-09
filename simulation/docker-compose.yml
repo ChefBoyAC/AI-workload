@@ -1,0 +1,37 @@
+# Analytical Astra-SIM one-shot (memory-capped). Overwrites ./generated.
+#
+# Build:  docker compose build
+# MoE:    docker compose run --rm moe-rail-sim
+# LLM:    docker compose run --rm llm-v1-rail-sim
+# Reuse:  GENERATE=0 docker compose run --rm llm-v1-rail-sim
+
+x-astra-sim-common: &astra-sim-common
+  image: moe-rail-astra-sim:phase-c
+  working_dir: /workspace
+  volumes:
+    - ./generated:/workspace/generated
+    - ./config:/workspace/config:ro
+    - ./src:/workspace/src:ro
+  mem_limit: 4g
+  memswap_limit: 4g
+  shm_size: 512m
+
+services:
+  moe-rail-sim:
+    <<: *astra-sim-common
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        ASTRA_SIM_REF: master
+    environment:
+      GENERATE: ${GENERATE:-1}
+      CONFIG_PATH: /workspace/config/moe_rail.yaml
+      ASTRA_SIM_HOME: /opt/astra-sim
+
+  llm-v1-rail-sim:
+    <<: *astra-sim-common
+    environment:
+      GENERATE: ${GENERATE:-1}
+      CONFIG_PATH: /workspace/config/llm_v1_rail.yaml
+      ASTRA_SIM_HOME: /opt/astra-sim

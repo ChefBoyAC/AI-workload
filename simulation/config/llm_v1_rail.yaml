@@ -1,0 +1,53 @@
+# Sibling config: dense LLM-v1 workload + same Rail topology as MoE.
+# Overwrites generated/ when run (storage-saving). Switch via CONFIG_PATH.
+
+workload_type: llm_v1
+
+run:
+  name: llm_v1_rail_baseline
+  training_steps: 1
+  compute_stub_ns: 1000
+
+llm:
+  gpus: 16
+  precision: BF16
+  sequence_length: 2048
+  hidden_size: 4096
+  global_batch_size: 64
+  microbatch_size: 4
+  parallelism:
+    tp: 4
+    dp: 4
+    pp: 1
+  # No experts / no MoE routed payload for LLM-v1.
+  payloads_mib:
+    activation: 64
+    dp_gradient_bucket: 256
+
+rail:
+  nodes: 2
+  gpus_per_node: 8
+  logical_dims: [8, 2]
+  intra_node_topology: FullyConnected
+  inter_node_topology: Switch
+  bandwidth_gbs: [300.0, 50.0]
+  latency_ns: [100.0, 500.0]
+
+system:
+  scheduling_policy: LIFO
+  intra_dimension_scheduling: FIFO
+  inter_dimension_scheduling: baseline
+  endpoint_delay: 10
+  active_chunks_per_dimension: 1
+  preferred_dataset_splits: 1
+  collective_optimization: localBWAware
+  all_reduce_implementation: [ring, ring]
+  all_gather_implementation: [ring, ring]
+  reduce_scatter_implementation: [ring, ring]
+  all_to_all_implementation: [direct, direct]
+
+paths:
+  generated_root: generated
+  workload_dir: generated/workload
+  topology_dir: generated/topology
+  system_dir: generated/system
