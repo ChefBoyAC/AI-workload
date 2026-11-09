@@ -1,0 +1,16 @@
+{
+  "matrix_row": {
+    "ai_workload": "LLM",
+    "workload_config_id": "LLM-v1",
+    "topology": "Rail"
+  },
+  "npus": 16,
+  "workload_params": "../../workloads/llm-v1/params.yaml",
+  "topology_network": "../../topologies/rail/network.yml",
+  "remote_memory": "../../shared/remote_memory.json",
+  "schedulers": {
+    "baseline": "../../schedulers/baseline/rail.json",
+    "nccl": "../../schedulers/nccl/rail.json"
+  },
+  "how_to_run": "From simulation/ use docker compose (moe-rail-sim or llm-v1-rail-sim). For NCCL, GENERATE=0 and point system config to schedulers/nccl/rail.json."
+}

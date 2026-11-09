@@ -1,0 +1,61 @@
+# Single source of truth for MoE workload + Rail topology (Phase B).
+# Generators read this file; do not hard-code these values in Python.
+
+workload_type: moe
+
+run:
+  name: moe_rail_baseline
+  training_steps: 1          # JCT = simulated time for this many steps
+  compute_stub_ns: 1000      # placeholder compute duration per compute node
+
+moe:
+  gpus: 16
+  precision: BF16            # 2 bytes / element
+  sequence_length: 2048
+  hidden_size: 4096
+  global_batch_size: 64
+  microbatch_size: 4
+  parallelism:
+    tp: 2
+    ep: 4
+    dp: 2
+    pp: 1
+  experts:
+    num_experts: 8
+    top_k: 2
+  payloads_mib:
+    activation: 64           # representative activation tensor
+    moe_routed_aggregate: 128
+    dp_gradient_bucket: 256
+
+rail:
+  nodes: 2
+  gpus_per_node: 8
+  # Analytical dims: intra-node then inter-node rail
+  logical_dims: [8, 2]
+  intra_node_topology: FullyConnected   # NVLink/NVSwitch-like
+  inter_node_topology: Switch           # rail / fabric between nodes
+  # Placeholder link knobs (YAML-owned; tune later)
+  bandwidth_gbs: [300.0, 50.0]          # [intra, inter] GB/s
+  latency_ns: [100.0, 500.0]            # [intra, inter] ns
+
+system:
+  # Default Astra-SIM collective scheduler (NOT a custom intra-DLT scheduler).
+  scheduling_policy: LIFO
+  intra_dimension_scheduling: FIFO
+  inter_dimension_scheduling: baseline
+  endpoint_delay: 10
+  active_chunks_per_dimension: 1
+  preferred_dataset_splits: 1
+  collective_optimization: localBWAware
+  # One algorithm entry per logical dimension (must match len(logical_dims)).
+  all_reduce_implementation: [ring, ring]
+  all_gather_implementation: [ring, ring]
+  reduce_scatter_implementation: [ring, ring]
+  all_to_all_implementation: [direct, direct]
+
+paths:
+  generated_root: generated
+  workload_dir: generated/workload
+  topology_dir: generated/topology
+  system_dir: generated/system

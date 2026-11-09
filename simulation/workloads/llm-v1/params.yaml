@@ -1,0 +1,17 @@
+workload_id: LLM-v1
+workload_family: LLM
+precision: BF16
+sequence_length: 2048
+hidden_size: 4096
+global_batch_size: 64
+microbatch_size: 4
+parallelism:
+  tp: 4
+  dp: 4
+  pp: 1
+experts: null
+main_communication: AllReduce
+payloads_mib:
+  activation: 64
+  dp_gradient_bucket: 256
+notes: Dense LLM baseline used on Ring, Rail, and Torus rows of the matrix.

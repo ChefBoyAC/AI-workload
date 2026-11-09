@@ -1,0 +1,21 @@
+workload_id: MoE-v1
+workload_family: MoE
+precision: BF16
+sequence_length: 2048
+hidden_size: 4096
+global_batch_size: 64
+microbatch_size: 4
+parallelism:
+  tp: 2
+  ep: 4
+  dp: 2
+  pp: 1
+experts:
+  num_experts: 8
+  top_k: 2
+main_communication: AllToAll
+payloads_mib:
+  activation: 64
+  moe_routed_aggregate: 128
+  dp_gradient_bucket: 256
+notes: MoE baseline used on Ring, Rail, and Torus rows of the matrix.

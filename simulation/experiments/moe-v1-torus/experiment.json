@@ -1,0 +1,16 @@
+{
+  "matrix_row": {
+    "ai_workload": "MoE",
+    "workload_config_id": "MoE-v1",
+    "topology": "Torus"
+  },
+  "npus": 64,
+  "workload_params": "../../workloads/moe-v1/params.yaml",
+  "topology_network": "../../topologies/torus/network.yml",
+  "remote_memory": "../../shared/remote_memory.json",
+  "schedulers": {
+    "baseline": "../../schedulers/baseline/torus.json",
+    "nccl": "../../schedulers/nccl/torus.json"
+  },
+  "how_to_run": "Use torus_kit/run_all.sh + gen_workload.py. For NCCL, swap system file to schedulers/nccl/torus.json."
+}
