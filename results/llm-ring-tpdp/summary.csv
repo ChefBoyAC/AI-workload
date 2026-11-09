@@ -1,2 +1,0 @@
-workload,topology,gpu_count,tensor_parallel_size,data_parallel_size,iterations,tp_message_bytes,dp_message_bytes,compute_total_us,completion_ns,jct_us,communication_and_wait_us,mean_iteration_communication_and_wait_us
-Dense LLM,Ring,16,4,4,3,67108864,268435456,700,96642620,96642.62,95942.62,31980.873333

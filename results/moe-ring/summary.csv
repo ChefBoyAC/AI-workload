@@ -1,2 +1,0 @@
-workload,topology,gpu_count,tensor_parallel_size,expert_parallel_size,data_parallel_size,iterations,moe_alltoall_bytes,dp_message_bytes,compute_total_us,completion_ns,jct_us,communication_and_wait_us,mean_iteration_communication_and_wait_us
-MoE,Ring,16,2,4,2,3,134217728,268435456,700,145082120,145082.12,144382.12,48127.373333
