@@ -38,9 +38,9 @@ Each `experiments/<row>/experiment.json` points at the workload params, topology
 |---|---|
 | Ring | 16 |
 | Rail | 16 (2×8) |
-| Torus | 64 (4×4×4) |
+| Torus | 16 (4×2×2) |
 
-Do not compare JCTs across different NPU counts as if they were identical conditions.
+Ring, Rail, and Torus all use **16 GPUs/NPUs** so baseline JCTs are comparable on unit count.
 
 ## Quick pointers
 
