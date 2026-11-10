@@ -36,7 +36,7 @@ VALID_SCHEDULERS = {"nccl", "baseline"}
 TOPOLOGY_NPUS = {
     "ring": 16,
     "rail": 16,
-    "torus": 64,
+    "torus": 16,
 }
 
 
@@ -100,7 +100,7 @@ def copy_inputs(
 def write_workload_text(root: Path, workload: str, out_dir: Path) -> tuple[Path, dict]:
     """
     Build Chakra text workload from the Rail YAML knobs (same payloads as matrix params).
-    NPU count is applied later at conversion time (16 vs 64).
+    Unit count (GPUs/NPUs) is applied later at conversion time (16 for Ring/Rail/Torus).
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     if workload == "llm-v1":

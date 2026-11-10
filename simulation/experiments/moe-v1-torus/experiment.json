@@ -4,7 +4,7 @@
     "workload_config_id": "MoE-v1",
     "topology": "Torus"
   },
-  "npus": 64,
+  "npus": 16,
   "workload_params": "../../workloads/moe-v1/params.yaml",
   "topology_network": "../../topologies/torus/network.yml",
   "remote_memory": "../../shared/remote_memory.json",
