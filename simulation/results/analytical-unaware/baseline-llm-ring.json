@@ -1,0 +1,35 @@
+{
+  "name": "llm-v1_ring_baseline",
+  "metrics": {
+    "Total Time (us)": 5492.315,
+    "Compute Time (us)": 3002.0,
+    "Exposed Communication Time (us)": 2490.315,
+    "Total Message Size (MiB, from workload contract)": 320.0,
+    "Comm fraction of JCT": 0.453418
+  },
+  "raw": {
+    "total_cycles": 5492315,
+    "exposed_comm_cycles": 2490315,
+    "compute_cycles_approx": 3002000,
+    "npu_finish_count": 16
+  },
+  "message_size_detail": {
+    "total_message_size_mib": 320.0,
+    "total_message_size_mb_approx": 320.0,
+    "per_step_message_size_mib": 320.0,
+    "training_steps": 1
+  },
+  "jct_proxy_us": 5492.315,
+  "notes": "Total Time (us) is the primary JCT proxy. Compute Time is approximated as total - exposed when Astra-SIM does not print a separate compute field. Append new fields to REQUIREMENTS.md \u00a77 if a live run surfaces more stable metrics.",
+  "extra": {
+    "workload": "llm-v1",
+    "topology": "ring",
+    "scheduler": "baseline",
+    "npus": 16,
+    "experiment": "/workspace/experiments/llm-v1-ring",
+    "system_config": "/workspace/generated/system/system.json",
+    "network_config": "/workspace/generated/topology/network.yml",
+    "astra_sim_bin": "/opt/astra-sim/build/astra_analytical/build/bin/AstraSim_Analytical_Congestion_Unaware",
+    "log_file": "/workspace/generated/astra_sim.log"
+  }
+}

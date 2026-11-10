@@ -1,0 +1,35 @@
+{
+  "name": "moe-v1_ring_nccl",
+  "metrics": {
+    "Total Time (us)": 7292.05,
+    "Compute Time (us)": 6006.0,
+    "Exposed Communication Time (us)": 1286.05,
+    "Total Message Size (MiB, from workload contract)": 576.0,
+    "Comm fraction of JCT": 0.176363
+  },
+  "raw": {
+    "total_cycles": 7292050,
+    "exposed_comm_cycles": 1286050,
+    "compute_cycles_approx": 6006000,
+    "npu_finish_count": 16
+  },
+  "message_size_detail": {
+    "total_message_size_mib": 576.0,
+    "total_message_size_mb_approx": 576.0,
+    "per_step_message_size_mib": 576.0,
+    "training_steps": 1
+  },
+  "jct_proxy_us": 7292.05,
+  "notes": "Total Time (us) is the primary JCT proxy. Compute Time is approximated as total - exposed when Astra-SIM does not print a separate compute field. Append new fields to REQUIREMENTS.md \u00a77 if a live run surfaces more stable metrics.",
+  "extra": {
+    "workload": "moe-v1",
+    "topology": "ring",
+    "scheduler": "nccl",
+    "npus": 16,
+    "experiment": "/workspace/experiments/moe-v1-ring",
+    "system_config": "/workspace/generated/system/system.json",
+    "network_config": "/workspace/generated/topology/network.yml",
+    "astra_sim_bin": "/opt/astra-sim/build/astra_analytical/build/bin/AstraSim_Analytical_Congestion_Unaware",
+    "log_file": "/workspace/generated/astra_sim.log"
+  }
+}

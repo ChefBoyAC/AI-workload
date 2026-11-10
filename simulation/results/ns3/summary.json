@@ -1,0 +1,62 @@
+{
+ "baseline-llm-rail": {
+  "total_us": 20438.714,
+  "exposed_us": 17436.714,
+  "npus": 16
+ },
+ "baseline-llm-ring": {
+  "total_us": 13747.769,
+  "exposed_us": 10745.769,
+  "npus": 16
+ },
+ "baseline-llm-torus": {
+  "total_us": 11881.9,
+  "exposed_us": 8879.9,
+  "npus": 16
+ },
+ "baseline-moe-rail": {
+  "total_us": 23475.11,
+  "exposed_us": 17469.11,
+  "npus": 16
+ },
+ "baseline-moe-ring": {
+  "total_us": 16808.515,
+  "exposed_us": 10802.515,
+  "npus": 16
+ },
+ "baseline-moe-torus": {
+  "total_us": 14930.636,
+  "exposed_us": 8924.636,
+  "npus": 16
+ },
+ "nccl-llm-rail": {
+  "total_us": 5238.423,
+  "exposed_us": 2236.423,
+  "npus": 16
+ },
+ "nccl-llm-ring": {
+  "total_us": 13688.695,
+  "exposed_us": 10686.695,
+  "npus": 16
+ },
+ "nccl-llm-torus": {
+  "total_us": 13748.943,
+  "exposed_us": 10746.943,
+  "npus": 16
+ },
+ "nccl-moe-rail": {
+  "total_us": 8274.833,
+  "exposed_us": 2268.833,
+  "npus": 16
+ },
+ "nccl-moe-ring": {
+  "total_us": 16749.449,
+  "exposed_us": 10743.449,
+  "npus": 16
+ },
+ "nccl-moe-torus": {
+  "total_us": 16769.297,
+  "exposed_us": 10763.297,
+  "npus": 16
+ }
+}
