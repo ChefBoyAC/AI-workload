@@ -6,6 +6,8 @@ Merged from branches: `arianne-ring` (Ring), `simulation` (Rail), `torus` (Torus
 
 ## Progress Report 2 coverage
 
+**Network backend for every cell (including baseline): ns-3.** Scheduler columns only swap `system.json`.
+
 | AI Workload | Workload Config ID | Topology | Baseline | NCCL |
 |---|---|---|---|---|
 | LLM | LLM-v1 | Torus | `experiments/llm-v1-torus` | `schedulers/nccl/torus.json` |
@@ -15,19 +17,20 @@ Merged from branches: `arianne-ring` (Ring), `simulation` (Rail), `torus` (Torus
 | MoE | MoE-v1 | Ring | `experiments/moe-v1-ring` | `schedulers/nccl/ring.json` |
 | MoE | MoE-v1 | Rail | `experiments/moe-v1-rail` | `schedulers/nccl/rail.json` |
 
-Cadent Flow / SYNDICATE / TACCL / ByteScheduler are **out of scope** here (placeholders in the spreadsheet only).
+Cadent Flow / SYNDICATE / TACCL / ByteScheduler are **out of scope** here (placeholders in the spreadsheet only) but will also run on the same ns-3 fabrics under `backends/ns3/`.
 
 ## Layout
 
 ```text
 simulation/
   workloads/          # llm-v1/, moe-v1/  (shared params)
-  topologies/         # ring/, rail/, torus/
+  topologies/         # ring/, rail/, torus/  (analytical YAML; debug only)
+  backends/ns3/       # physical + logical ns-3 configs (matrix default)
   schedulers/
-    baseline/         # default Astra-SIM system policies
+    baseline/         # default Astra-SIM system policies (still on ns-3)
     nccl/             # NCCL-like system policies
   experiments/        # one folder per matrix row (workload × topology)
-  config/ + src/ + docker/   # Rail generators / Docker one-shot
+  config/ + src/ + docker/   # generators / Docker one-shot
 ```
 
 Each `experiments/<row>/experiment.json` points at the workload params, topology network, baseline scheduler, and NCCL scheduler.
@@ -55,6 +58,7 @@ Ring, Rail, and Torus all use **16 GPUs/NPUs** so baseline JCTs are comparable o
 ## How to run in Docker (Ring / Rail / Torus × LLM / MoE)
 
 Default **communication scheduler is NCCL** (`SCHEDULER=nccl`).  
+Default **network backend is ns-3** (`BACKEND=ns3`) — including the baseline scheduler column.  
 Astra-SIM uses the NCCL *approximation* under `schedulers/nccl/` (not the real NVIDIA NCCL library).
 
 ### 0) One-time build (from `simulation/`)
@@ -63,6 +67,8 @@ Astra-SIM uses the NCCL *approximation* under `schedulers/nccl/` (not the real N
 cd simulation
 docker compose build
 ```
+
+Rebuild after this change: the image now compiles the ns-3 `AstraSimNetwork` binary (longer first build).
 
 ### 1) Run any matrix cell (named services)
 
@@ -91,16 +97,19 @@ docker compose run --rm -e WORKLOAD=moe-v1 -e TOPOLOGY=torus matrix
 | `WORKLOAD` | `llm-v1`, `moe-v1` | `llm-v1` |
 | `TOPOLOGY` | `ring`, `rail`, `torus` | `rail` |
 | `SCHEDULER` | `nccl`, `baseline` | **`nccl`** |
+| `BACKEND` | `ns3`, `analytical` | **`ns3`** |
 | `GENERATE` | `1`, `0` | `1` |
 
-### 3) Compare NCCL vs baseline on the same topology
+`BACKEND=analytical` is for quick local debug only — do **not** mix analytical and ns-3 numbers in the report matrix.
+
+### 3) Compare NCCL vs baseline on the same topology (both on ns-3)
 
 ```bash
-# NCCL (default)
+# NCCL (default scheduler) on ns-3 (default backend)
 docker compose run --rm moe-rail
 cp generated/results.json /tmp/moe-rail-nccl.json
 
-# Baseline Astra-SIM scheduler
+# Baseline Astra-SIM scheduler — still on ns-3
 SCHEDULER=baseline docker compose run --rm moe-rail
 cp generated/results.json /tmp/moe-rail-baseline.json
 ```
@@ -111,8 +120,7 @@ cp generated/results.json /tmp/moe-rail-baseline.json
 cat generated/results.json
 ```
 
-Check `extra.scheduler` (`nccl` or `baseline`), `extra.topology`, `extra.workload`, and `Total Time (us)` (JCT proxy).
-
+Check `extra.backend` (`ns3`), `extra.scheduler` (`nccl` or `baseline`), `extra.topology`, `extra.workload`, and `Total Time (us)` (JCT proxy).
 ---
 # Rail Docker guide (LLM-v1 / MoE-v1 on Rail)
 

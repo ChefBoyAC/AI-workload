@@ -1,5 +1,6 @@
 # ASTRA-sim matrix: LLM-v1 | MoE-v1  ×  Ring | Rail | Torus
 # Default communication scheduler: NCCL
+# Default network backend: ns-3 (shared by baseline + NCCL + future schedulers)
 #
 # Build once:
 #   docker compose build
@@ -9,6 +10,7 @@
 #   docker compose run --rm moe-ring
 #   docker compose run --rm llm-torus
 #   SCHEDULER=baseline docker compose run --rm moe-rail
+#   BACKEND=analytical docker compose run --rm moe-rail   # debug only
 #
 # Or one-shot with env overrides:
 #   docker compose run --rm -e WORKLOAD=moe-v1 -e TOPOLOGY=torus matrix
@@ -18,17 +20,18 @@ x-astra-sim-common: &astra-sim-common
   working_dir: /workspace
   volumes:
     - ./:/workspace
-  mem_limit: 4g
-  memswap_limit: 4g
+  mem_limit: 6g
+  memswap_limit: 6g
   shm_size: 512m
   environment: &astra-env
     GENERATE: ${GENERATE:-1}
     SCHEDULER: ${SCHEDULER:-nccl}
+    BACKEND: ${BACKEND:-ns3}
     ASTRA_SIM_HOME: /opt/astra-sim
     PYTHONPATH: /workspace
 
 services:
-  # Generic (override WORKLOAD / TOPOLOGY / SCHEDULER)
+  # Generic (override WORKLOAD / TOPOLOGY / SCHEDULER / BACKEND)
   matrix:
     <<: *astra-sim-common
     build:

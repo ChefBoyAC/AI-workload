@@ -12,5 +12,6 @@
     "baseline": "../../schedulers/baseline/rail.json",
     "nccl": "../../schedulers/nccl/rail.json"
   },
-  "how_to_run": "From simulation/ use docker compose (moe-rail-sim or llm-v1-rail-sim). For NCCL, GENERATE=0 and point system config to schedulers/nccl/rail.json."
+  "how_to_run": "From simulation/ use docker compose (BACKEND=ns3 default). SCHEDULER=nccl|baseline only changes system.json; network stays backends/ns3/.",
+  "backend": "ns3"
 }

@@ -12,5 +12,6 @@
     "baseline": "../../schedulers/baseline/ring.json",
     "nccl": "../../schedulers/nccl/ring.json"
   },
-  "how_to_run": "Repo-root scripts/run_*_ring.py or Astra-SIM with this network+system. For NCCL, use schedulers/nccl/ring.json as --system-configuration."
+  "how_to_run": "From simulation/ use docker compose (BACKEND=ns3 default). SCHEDULER=nccl|baseline only changes system.json; network stays backends/ns3/.",
+  "backend": "ns3"
 }

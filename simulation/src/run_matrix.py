@@ -5,6 +5,7 @@ Environment:
   WORKLOAD=llm-v1|moe-v1          (required for matrix mode; default llm-v1)
   TOPOLOGY=ring|rail|torus        (default rail)
   SCHEDULER=nccl|baseline         (default nccl)
+  BACKEND=ns3|analytical          (default ns3 — fair matrix baseline)
   GENERATE=1|0                    regenerate text workload (default 1)
   ASTRA_SIM_HOME                  Astra-SIM checkout (default /opt/astra-sim)
 """
@@ -20,6 +21,7 @@ from pathlib import Path
 
 from .config_loader import load_config, project_root
 from .io_util import write_json_replace, write_text_replace
+from .ns3_backend import ns3_binary, ns3_root, prepare_ns3_inputs, run_ns3_cmd
 from .results_parser import build_results_document, write_results
 from .run_sim import astra_binary, astra_home, convert_text_to_et, env_flag
 from .workload.llm_params import llm_params_from_config
@@ -32,6 +34,7 @@ from .workload.text_trace import write_llm_text_workload, write_moe_text_workloa
 VALID_WORKLOADS = {"llm-v1", "moe-v1"}
 VALID_TOPOLOGIES = {"ring", "rail", "torus"}
 VALID_SCHEDULERS = {"nccl", "baseline"}
+VALID_BACKENDS = {"ns3", "analytical"}
 
 TOPOLOGY_NPUS = {
     "ring": 16,
@@ -44,10 +47,11 @@ def _env(name: str, default: str) -> str:
     return os.environ.get(name, default).strip().lower()
 
 
-def resolve_matrix_choice() -> tuple[str, str, str]:
+def resolve_matrix_choice() -> tuple[str, str, str, str]:
     workload = _env("WORKLOAD", "llm-v1")
     topology = _env("TOPOLOGY", "rail")
     scheduler = _env("SCHEDULER", "nccl")  # NCCL is the default scheduler
+    backend = _env("BACKEND", "ns3")  # ns-3 is the fair matrix network backend
 
     if workload not in VALID_WORKLOADS:
         raise ValueError(f"WORKLOAD must be one of {sorted(VALID_WORKLOADS)}, got {workload}")
@@ -55,46 +59,51 @@ def resolve_matrix_choice() -> tuple[str, str, str]:
         raise ValueError(f"TOPOLOGY must be one of {sorted(VALID_TOPOLOGIES)}, got {topology}")
     if scheduler not in VALID_SCHEDULERS:
         raise ValueError(f"SCHEDULER must be one of {sorted(VALID_SCHEDULERS)}, got {scheduler}")
-    return workload, topology, scheduler
+    if backend not in VALID_BACKENDS:
+        raise ValueError(f"BACKEND must be one of {sorted(VALID_BACKENDS)}, got {backend}")
+    return workload, topology, scheduler, backend
 
 
 def experiment_dir(root: Path, workload: str, topology: str) -> Path:
     return root / "experiments" / f"{workload}-{topology}"
 
 
-def copy_inputs(
+def copy_system_inputs(
     root: Path,
     *,
     topology: str,
     scheduler: str,
-    out_topology: Path,
     out_system: Path,
-) -> tuple[Path, Path]:
-    network_src = root / "topologies" / topology / "network.yml"
+) -> Path:
+    """Copy scheduler system.json + shared remote_memory into generated/system/."""
     system_src = root / "schedulers" / scheduler / f"{topology}.json"
     remote_src = root / "shared" / "remote_memory.json"
 
-    if not network_src.exists():
-        raise FileNotFoundError(f"Missing topology network: {network_src}")
     if not system_src.exists():
         raise FileNotFoundError(f"Missing scheduler system config: {system_src}")
     if not remote_src.exists():
         raise FileNotFoundError(f"Missing remote memory config: {remote_src}")
 
-    out_topology.mkdir(parents=True, exist_ok=True)
     out_system.mkdir(parents=True, exist_ok=True)
-
-    network_dst = out_topology / "network.yml"
     system_dst = out_system / "system.json"
     remote_dst = out_system / "remote_memory.json"
 
-    shutil.copyfile(network_src, network_dst)
     # Strip helper comments Astra-SIM may not accept in JSON.
     system_doc = json.loads(system_src.read_text(encoding="utf-8"))
     system_doc.pop("_comment", None)
     write_json_replace(system_dst, system_doc)
     shutil.copyfile(remote_src, remote_dst)
-    return network_dst, system_dst
+    return system_dst
+
+
+def copy_analytical_network(root: Path, topology: str, out_topology: Path) -> Path:
+    network_src = root / "topologies" / topology / "network.yml"
+    if not network_src.exists():
+        raise FileNotFoundError(f"Missing topology network: {network_src}")
+    out_topology.mkdir(parents=True, exist_ok=True)
+    network_dst = out_topology / "network.yml"
+    shutil.copyfile(network_src, network_dst)
+    return network_dst
 
 
 def write_workload_text(root: Path, workload: str, out_dir: Path) -> tuple[Path, dict]:
@@ -119,7 +128,7 @@ def write_workload_text(root: Path, workload: str, out_dir: Path) -> tuple[Path,
     return text_path, doc
 
 
-def run_astra(
+def run_astra_analytical(
     *,
     binary: Path,
     workload_prefix: Path,
@@ -135,9 +144,39 @@ def run_astra(
         f"--network-configuration={network}",
         f"--remote-memory-configuration={remote_memory}",
     ]
+    return _run_sim(cmd, log_path)
+
+
+def run_astra_ns3(
+    *,
+    binary: Path,
+    astra_home: Path,
+    workload_prefix: Path,
+    system: Path,
+    network_config: Path,
+    remote_memory: Path,
+    logical_topology: Path,
+    log_path: Path,
+) -> str:
+    cmd = run_ns3_cmd(
+        binary=binary,
+        workload_prefix=workload_prefix,
+        system=system,
+        network_config=network_config,
+        remote_memory=remote_memory,
+        logical_topology=logical_topology,
+    )
+    # Official examples cd into build/scratch before launching the binary.
+    cwd = ns3_root(astra_home) / "build" / "scratch"
+    return _run_sim(cmd, log_path, cwd=cwd)
+
+
+def _run_sim(cmd: list[str], log_path: Path, cwd: Path | None = None) -> str:
     print("Running Astra-SIM:")
     print(" ", " ".join(cmd))
-    completed = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    if cwd is not None:
+        print(f"  cwd={cwd}")
+    completed = subprocess.run(cmd, check=False, capture_output=True, text=True, cwd=cwd)
     combined = (completed.stdout or "") + "\n" + (completed.stderr or "")
     write_text_replace(log_path, combined)
     if completed.returncode != 0:
@@ -149,28 +188,29 @@ def run_astra(
 
 def main() -> int:
     root = project_root()
-    workload, topology, scheduler = resolve_matrix_choice()
+    workload, topology, scheduler, backend = resolve_matrix_choice()
     npus = TOPOLOGY_NPUS[topology]
-    run_name = f"{workload}_{topology}_{scheduler}"
+    run_name = f"{workload}_{topology}_{scheduler}_{backend}"
 
     print("=== ASTRA-sim matrix run ===")
     print(f"WORKLOAD={workload}")
     print(f"TOPOLOGY={topology} (npus={npus})")
     print(f"SCHEDULER={scheduler}  (default is nccl)")
+    print(f"BACKEND={backend}  (default is ns3 — fair baseline for all schedulers)")
     print(f"GENERATE={env_flag('GENERATE', '1')}")
 
     generated = root / "generated"
     wl_dir = generated / "workload"
     topo_dir = generated / "topology"
     sys_dir = generated / "system"
-    for d in (wl_dir, topo_dir, sys_dir):
+    ns3_dir = generated / "ns3"
+    for d in (wl_dir, topo_dir, sys_dir, ns3_dir):
         d.mkdir(parents=True, exist_ok=True)
 
-    network, system = copy_inputs(
+    system = copy_system_inputs(
         root,
         topology=topology,
         scheduler=scheduler,
-        out_topology=topo_dir,
         out_system=sys_dir,
     )
     remote_memory = sys_dir / "remote_memory.json"
@@ -197,16 +237,38 @@ def main() -> int:
     convert_text_to_et(text_path, et_prefix, npus)
 
     home = astra_home()
-    binary = astra_binary(home)
     log_path = generated / "astra_sim.log"
-    log_text = run_astra(
-        binary=binary,
-        workload_prefix=et_prefix,
-        system=system,
-        network=network,
-        remote_memory=remote_memory,
-        log_path=log_path,
-    )
+
+    logical_topology: Path | None = None
+    if backend == "ns3":
+        network, logical_topology = prepare_ns3_inputs(
+            root=root,
+            astra_home=home,
+            topology=topology,
+            out_dir=ns3_dir,
+        )
+        binary = ns3_binary(home)
+        log_text = run_astra_ns3(
+            binary=binary,
+            astra_home=home,
+            workload_prefix=et_prefix,
+            system=system,
+            network_config=network,
+            remote_memory=remote_memory,
+            logical_topology=logical_topology,
+            log_path=log_path,
+        )
+    else:
+        network = copy_analytical_network(root, topology, topo_dir)
+        binary = astra_binary(home)
+        log_text = run_astra_analytical(
+            binary=binary,
+            workload_prefix=et_prefix,
+            system=system,
+            network=network,
+            remote_memory=remote_memory,
+            log_path=log_path,
+        )
 
     results = build_results_document(
         run_name=run_name,
@@ -216,10 +278,12 @@ def main() -> int:
             "workload": workload,
             "topology": topology,
             "scheduler": scheduler,
+            "backend": backend,
             "npus": npus,
             "experiment": str(experiment_dir(root, workload, topology)),
             "system_config": str(system),
             "network_config": str(network),
+            "logical_topology": str(logical_topology) if logical_topology else None,
             "astra_sim_bin": str(binary),
             "log_file": str(log_path),
         },
