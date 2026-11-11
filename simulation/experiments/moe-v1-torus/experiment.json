@@ -12,5 +12,6 @@
     "baseline": "../../schedulers/baseline/torus.json",
     "nccl": "../../schedulers/nccl/torus.json"
   },
-  "how_to_run": "Use torus_kit/run_all.sh + gen_workload.py. For NCCL, swap system file to schedulers/nccl/torus.json."
+  "how_to_run": "From simulation/ use docker compose (BACKEND=ns3 default). SCHEDULER=nccl|baseline only changes system.json; network stays backends/ns3/.",
+  "backend": "ns3"
 }

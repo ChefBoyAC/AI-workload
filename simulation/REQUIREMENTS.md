@@ -28,6 +28,8 @@ This repo starts from workload + topology. Scheduler plug-ins (TACCL, NCCL, Byte
 
 **Yes — especially for your scheduler comparison.**
 
+**Locked for Progress Report 2:** every matrix cell (baseline + NCCL + future TACCL / ByteScheduler / SYNDICATE / CadentFlow) uses the **ns-3** backend under `backends/ns3/`. Analytical remains available only as `BACKEND=analytical` for debug — never for reported cross-scheduler numbers.
+
 | Backend | What it models well | RAM / speed | Fit for your goal |
 |---|---|---|---|
 | **Analytical** | Hierarchical dims, link BW/latency, collective phasing | Low RAM, fast | Best **Phase 1** baseline |
@@ -40,10 +42,8 @@ How this maps to the systems you named:
 
 **Requirement for this project:**
 
-- **Phase 1 (now):** Analytical backend + Rail logical dims, Dockerized, low RAM.
-- **Phase 2 (next):** Same workload + explicit Rail **physical** topology on ns-3 for scheduler bake-offs.
-
-Do not skip Phase 1; it validates MoE + Rail wiring before paying ns-3 cost.
+- **Phase 1 (done):** Analytical backend + Rail logical dims, Dockerized, low RAM.
+- **Phase 2 (now):** Same workloads + Ring/Rail/Torus **physical** topologies on **ns-3** for fair scheduler bake-offs (baseline included).
 
 ---
 
@@ -211,7 +211,7 @@ Exact rank layout must be documented in code comments and in generated `topology
 ## 6. Docker / RAM constraints
 
 - Use official/current **astra-sim** clone inside image (pinned git SHA in Dockerfile).
-- Prefer **analytical** binary for default `docker compose up`.
+- Prefer **ns-3** binary for default `docker compose up` (matrix fairness). Analytical stays buildable for debug (`BACKEND=analytical`).
 - Set container memory limit (suggested starting point: **4g**, adjust after smoke test).
 - Mount `./generated` and `./config` as volumes.
 

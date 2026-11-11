@@ -28,6 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     libboost-dev \
     libboost-program-options-dev \
+    openmpi-bin \
+    openmpi-doc \
+    libopenmpi-dev \
     python3 \
     python3-pip \
     python3-venv \
@@ -88,6 +91,13 @@ RUN ./build/astra_analytical/build.sh \
     && test -x build/astra_analytical/build/bin/AstraSim_Analytical_Congestion_Unaware \
        -o -x build/astra_analytical/build/bin/AstraSim_Analytical_Congestion_Aware
 
+### ---- Build Astra-SIM ns-3 backend (matrix default for fair scheduler compare) ----
+# Cap -j to 2: full nproc OOMs easily on Docker Desktop during ns-3 compile.
+RUN sed -i 's/-j $(nproc)/-j 2/g' ./build/astra_ns3/build.sh \
+    && ./build/astra_ns3/build.sh \
+    && ls -la extern/network_backend/ns-3/build/scratch/ \
+    && test -n "$(ls extern/network_backend/ns-3/build/scratch/ns3*-AstraSimNetwork* 2>/dev/null)"
+
 ### ---- Install Chakra from Astra-SIM submodule (Text → ET converter) ----
 WORKDIR ${ASTRA_SIM_HOME}/extern/graph_frontend/chakra
 RUN /opt/venv/bin/pip install -e . || /opt/venv/bin/pip install .
@@ -103,6 +113,7 @@ COPY config /workspace/config
 COPY src /workspace/src
 COPY workloads /workspace/workloads
 COPY topologies /workspace/topologies
+COPY backends /workspace/backends
 COPY schedulers /workspace/schedulers
 COPY experiments /workspace/experiments
 COPY shared /workspace/shared
@@ -113,6 +124,7 @@ ENV PYTHONPATH=/workspace \
     WORKLOAD=llm-v1 \
     TOPOLOGY=rail \
     SCHEDULER=nccl \
+    BACKEND=ns3 \
     GENERATE=1
 
 ENTRYPOINT ["/workspace/docker/entrypoint.sh"]

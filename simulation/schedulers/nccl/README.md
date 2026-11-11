@@ -12,3 +12,5 @@ Astra-SIM does not run the real NCCL library. These `system.json` files approxim
 | `active-chunks-per-dimension` / `preferred-dataset-splits` | `8` | Mimics NCCL multi-channel chunking |
 
 Use with a frozen workload + topology experiment under `experiments/*` by pointing `--system-configuration` at the matching topology file here (`ring.json`, `rail.json`, or `torus.json`).
+
+**Backend:** matrix runs default to **ns-3** (`BACKEND=ns3`), same fabric as the baseline column — only this `system.json` changes.
