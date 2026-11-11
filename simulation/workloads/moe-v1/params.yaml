@@ -1,5 +1,6 @@
 workload_id: MoE-v1
 workload_family: MoE
+gpus: 16
 precision: BF16
 sequence_length: 2048
 hidden_size: 4096
