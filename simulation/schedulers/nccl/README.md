@@ -7,7 +7,7 @@ Astra-SIM does not run the real NCCL library. These `system.json` files approxim
 | Knob | Choice | Why |
 |---|---|---|
 | AllReduce / AllGather / ReduceScatter | `ring` per dimension | Classic NCCL large-message AllReduce |
-| AllToAll | `direct` | Pairwise-style exchange (MoE EP) |
+| AllToAll | `direct` on **Rail**; `ring` on **Ring/Torus** | Rail’s switch can route every pair (`direct`). Ring/Torus have no all-pairs wires, so `direct` AllToAll fails ns-3 with “NIC is alive”; use `ring` hops instead for MoE EP. |
 | `scheduling-policy` | `FIFO` | In-order launch vs baseline `LIFO` |
 | `active-chunks-per-dimension` / `preferred-dataset-splits` | `8` | Mimics NCCL multi-channel chunking |
 

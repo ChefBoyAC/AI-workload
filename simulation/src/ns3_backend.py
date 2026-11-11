@@ -91,7 +91,37 @@ def prepare_ns3_inputs(
     logical_dst = out_dir / "logical.json"
     shutil.copyfile(logical_src, logical_dst)
 
+    # ns-3 SetupNetwork() opens FLOW_FILE and TRACE_FILE for *read* at boot.
+    # Astra-SIM drives traffic itself, so these are stubs: a leading 0 count.
+    # Paths in config.txt are relative to cwd = ns-3/build/scratch.
+    _ensure_ns3_boot_stubs(config_src=config_src, scratch_cwd=ns3 / "build" / "scratch")
+
     return config_dst, logical_dst
+
+
+def _ensure_ns3_boot_stubs(*, config_src: Path, scratch_cwd: Path) -> None:
+    """Create empty FLOW_FILE / TRACE_FILE inputs ns-3 requires at startup."""
+    keys = {"FLOW_FILE", "TRACE_FILE"}
+    resolved: dict[str, Path] = {}
+    for line in config_src.read_text(encoding="utf-8").splitlines():
+        parts = line.split(None, 1)
+        if len(parts) != 2:
+            continue
+        key, raw = parts[0].strip(), parts[1].strip()
+        if key not in keys:
+            continue
+        path = Path(raw)
+        if not path.is_absolute():
+            path = (scratch_cwd / path).resolve()
+        resolved[key] = path
+
+    for key in keys:
+        if key not in resolved:
+            raise FileNotFoundError(f"{config_src} missing required {key}")
+        path = resolved[key]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Official Astra-SIM test inputs use a single "0" (zero entries).
+        path.write_text("0\n", encoding="utf-8")
 
 
 def run_ns3_cmd(

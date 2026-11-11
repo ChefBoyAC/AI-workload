@@ -7,7 +7,7 @@
   "all-reduce-implementation": ["ring", "ring", "ring"],
   "all-gather-implementation": ["ring", "ring", "ring"],
   "reduce-scatter-implementation": ["ring", "ring", "ring"],
-  "all-to-all-implementation": ["direct", "direct", "direct"],
+  "all-to-all-implementation": ["ring", "ring", "ring"],
   "collective-optimization": "localBWAware",
   "local-mem-bw": 1600,
   "boost-mode": 0
