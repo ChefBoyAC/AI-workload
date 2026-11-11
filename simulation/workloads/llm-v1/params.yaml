@@ -1,5 +1,6 @@
 workload_id: LLM-v1
 workload_family: LLM
+gpus: 16
 precision: BF16
 sequence_length: 2048
 hidden_size: 4096
