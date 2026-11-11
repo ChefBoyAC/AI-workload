@@ -86,8 +86,15 @@ def write_text_workload(params: MoEParams, output_dir: Path) -> Path:
 
 
 def _format_data_workload(layers: list[str], training_steps: int) -> str:
+    """
+    Emit Chakra text with HYBRID_DATA_MODEL so forward collectives are kept.
+
+    Plain DATA mode only converts weight-gradient (WG) communication, which
+    zeroed out TP AllReduce / MoE AllToAll and left only the DP gradient AR.
+    HYBRID_DATA_MODEL keeps forward + WG collectives for the matrix baseline.
+    """
     expanded = layers * training_steps
-    lines = ["DATA", str(len(expanded)), *expanded]
+    lines = ["HYBRID_DATA_MODEL", str(len(expanded)), *expanded]
     return "\n".join(lines) + "\n"
 
 
